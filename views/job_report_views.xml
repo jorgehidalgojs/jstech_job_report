@@ -39,7 +39,7 @@
                             type="object"
                             string="Iniciar Elaboração"
                             class="btn-secondary"
-                            attrs="{'invisible': [('status', 'not in', ('pending','rejected','late'))]}"/>
+                            attrs="{'invisible': ['|', ('can_edit', '=', False), ('status', 'not in', ('pending','rejected','late'))]}"/>
 
                     <button name="action_submit"
                             type="object"
@@ -63,7 +63,7 @@
                             type="object"
                             string="Concluir"
                             class="btn-secondary"
-                            attrs="{'invisible': [('status', '!=', 'approved')]}"/>
+                            attrs="{'invisible': [('can_done', '=', False)]}"/>
 
                     <button name="action_cancel"
                             type="object"
@@ -90,6 +90,7 @@
                         <field name="can_approve"/>
                         <field name="can_reject"/>
                         <field name="can_cancel"/>
+                        <field name="can_done"/>
                         <field name="available_area_ids"/>
                         <field name="available_goal_ids"/>
                         <field name="employee_user_id"/>
@@ -134,47 +135,50 @@
                         <group string="Contexto Estratégico">
                             <field name="company_id"
                                    groups="base.group_multi_company"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                                   readonly="1"/>
 
                             <field name="area_id"
                                    domain="[('id', 'in', available_area_ids)]"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                                   attrs="{'readonly': [('can_edit', '=', False)]}"/>
 
                             <field name="goal_id"
                                    domain="[('id', 'in', available_goal_ids)]"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                                   attrs="{'readonly': [('can_edit', '=', False)]}"/>
 
                             <field name="assignment_id"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}" invisible="1"/>
+                                   attrs="{'readonly': [('can_edit', '=', False)]}" invisible="1"/>
 
                             <field name="is_manual" readonly="1" invisible="1" />
                         </group>
 
                         <group string="Responsáveis">
                             <field name="employee_id"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                                   readonly="1"/>
 
                             <field name="manager_id"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                                   readonly="1"/>
                         </group>
                     </group>
 
                     <group string="Janela Temporal">
                         <group>
                             <field name="period_start"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                                   attrs="{'readonly': [('can_edit', '=', False)]}"/>
 
                             <field name="period_end"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                                   attrs="{'readonly': [('can_edit', '=', False)]}"/>
 
                             <field name="deadline_date"
-                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                                   attrs="{'readonly': [('can_edit', '=', False)]}"/>
                         </group>
 
                         <group string="Rastreabilidade">
-                            <field name="submission_date" readonly="1"/>
-                            <field name="approved_date" readonly="1"/>
-                            <field name="rejected_date" readonly="1"/>
+                            <field name="submission_date" readonly="1"
+                                   attrs="{'invisible': [('submission_date', '=', False)]}"/>
+                            <field name="approved_date" readonly="1"
+                                   attrs="{'invisible': [('approved_date', '=', False)]}"/>
+                            <field name="rejected_date" readonly="1"
+                                   attrs="{'invisible': [('rejected_date', '=', False)]}"/>
                         </group>
                     </group>
 
@@ -272,16 +276,14 @@
                         </page>
 
                         <page string="Medição"
-                              attrs="{'invisible': [('status', 'in', ('pending','draft','cancelled'))]}">
+                              attrs="{'invisible': [('status', 'in', ('pending','cancelled'))]}">
 
                             <group>
                                 <group string="Indicador Principal">
                                     <field name="periodicity" readonly="1"/>
                                     <field name="metric_type" readonly="1"/>
-                                    <field name="unit_of_measure"
-                                           attrs="{'readonly': [('can_edit', '=', False)]}"/>
-                                    <field name="planned_value"
-                                           attrs="{'readonly': [('can_edit', '=', False)]}"/>
+                                    <field name="unit_of_measure" readonly="1"/>
+                                    <field name="planned_value" readonly="1"/>
                                     <field name="actual_value"
                                            attrs="{'readonly': [('can_edit', '=', False)]}"/>
                                     <field name="achievement_percentage" readonly="1"/>
@@ -303,29 +305,28 @@
                                        attrs="{'readonly': [('can_edit', '=', False)]}">
                                     <tree editable="bottom">
                                         <field name="sequence"/>
-                                        <field name="metric_name"/>
-                                        <field name="metric_type"/>
-                                        <field name="planned_value"/>
+                                        <field name="metric_name" readonly="1"/>
+                                        <field name="metric_type" readonly="1"/>
+                                        <field name="planned_value" readonly="1"/>
                                         <field name="actual_value"/>
                                         <field name="achievement_percentage" readonly="1"/>
-                                        <field name="weight"/>
+                                        <field name="weight" readonly="1"/>
                                         <field name="score" readonly="1"/>
+                                        <field name="notes"/>
                                     </tree>
                                 </field>
                             </group>
                         </page>
 
                         <page string="Inteligência e Metadados"
-                              groups="jstech_job_report.group_job_report_admin"
-                              attrs="{'invisible': [('id', '!=', False)]}">
+                              groups="jstech_job_report.group_job_report_admin">
                             <group string="Metadados para Inteligência Artificial">
                                 <field name="ai_metadata_json" nolabel="1" readonly="1"/>
                             </group>
                         </page>
 
                         <page string="Snapshots"
-                              groups="jstech_job_report.group_executive_manager,jstech_job_report.group_job_report_admin"
-                              attrs="{'invisible': [('id', '!=', False)]}">
+                              groups="jstech_job_report.group_executive_manager,jstech_job_report.group_job_report_admin">
                             <field name="snapshot_ids" readonly="1">
                                 <tree>
                                     <field name="snapshot_date"/>
@@ -341,7 +342,7 @@
                         </page>
 
                         <page string="Comunicação"
-                              attrs="{'invisible': [('id', '!=', False)]}">
+                              groups="jstech_job_report.group_goal_manager,jstech_job_report.group_area_manager,jstech_job_report.group_executive_manager,jstech_job_report.group_job_report_admin">
                             <field name="message_follower_ids" widget="mail_followers"/>
                             <field name="activity_ids" widget="mail_activity"/>
                             <field name="message_ids" widget="mail_thread"/>

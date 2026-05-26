@@ -359,6 +359,11 @@ class JobReport(models.Model):
         compute="_compute_user_permissions",
     )
 
+    can_done = fields.Boolean(
+        string="Pode Concluir",
+        compute="_compute_user_permissions",
+    )
+
     available_area_ids = fields.Many2many(
         "strategic.area",
         compute="_compute_available_area_ids",
@@ -605,6 +610,12 @@ class JobReport(models.Model):
             is_manager = employee_id and record.manager_id.id == employee_id
             is_area_mgr_for_record = employee_id and employee_id in area_manager_ids
             is_goal_mgr_for_record = employee_id and employee_id in goal_manager_ids
+            can_review_record = bool(
+                is_admin
+                or is_exec
+                or (is_area_manager and is_area_mgr_for_record)
+                or ((is_goal_manager or is_manager) and (is_goal_mgr_for_record or is_manager))
+            )
 
             record.can_edit = bool(
                 is_admin
@@ -617,17 +628,17 @@ class JobReport(models.Model):
             )
 
             record.can_approve = bool(
-                is_admin
-                or is_exec
-                or (is_area_manager and is_area_mgr_for_record and record.status == "submitted")
-                or ((is_goal_manager or is_manager) and (is_goal_mgr_for_record or is_manager) and record.status == "submitted")
+                record.status == "submitted" and can_review_record
             )
 
             record.can_reject = record.can_approve
 
             record.can_cancel = bool(
-                is_admin
-                or (is_owner and record.status in ("pending", "draft", "submitted", "late"))
+                is_admin and record.status not in ("approved", "done")
+            )
+
+            record.can_done = bool(
+                record.status == "approved" and can_review_record
             )
 
     @api.depends(
@@ -778,6 +789,15 @@ class JobReport(models.Model):
 
     @api.model
     def create(self, vals):
+        current_employee = self._get_current_employee()
+        if not self.env.user.has_group("jstech_job_report.group_job_report_admin"):
+            if current_employee:
+                vals.setdefault("employee_id", current_employee.id)
+                if vals.get("employee_id") != current_employee.id:
+                    raise UserError(_("Funcionários só podem criar relatórios em seu próprio nome."))
+            else:
+                raise UserError(_("O utilizador atual não está associado a um funcionário."))
+
         if vals.get("name", _("Novo")) == _("Novo"):
             vals["name"] = self.env["ir.sequence"].next_by_code("jstech.job.report") or _("Novo")
 
@@ -791,6 +811,11 @@ class JobReport(models.Model):
     def write(self, vals):
         if self.env.context.get("skip_ai_update"):
             return super(JobReport, self).write(vals)
+        if self.env.context.get("skip_job_report_permission_check"):
+            res = super(JobReport, self).write(vals)
+            if "ai_metadata_json" not in vals:
+                self._update_ai_metadata_json()
+            return res
 
         technical_fields = {
             "message_follower_ids",
@@ -834,6 +859,9 @@ class JobReport(models.Model):
                 raise UserError(_("Não é permitido editar relatórios aprovados, concluídos ou cancelados."))
 
             if record.status == "submitted":
+                if not (record.can_approve or record.can_reject):
+                    raise UserError(_("Após a submissão, apenas o gestor responsável pode avaliar o relatório."))
+
                 allowed = manager_edit_fields
                 if not protected_fields.issubset(allowed):
                     raise UserError(_("Após a submissão, apenas os campos de avaliação do gestor podem ser alterados."))
@@ -846,14 +874,9 @@ class JobReport(models.Model):
                     "area_id",
                     "goal_id",
                     "assignment_id",
-                    "employee_id",
-                    "manager_id",
-                    "company_id",
                     "period_start",
                     "period_end",
                     "deadline_date",
-                    "planned_value",
-                    "unit_of_measure",
                     "is_manual",
                 }
 
@@ -891,6 +914,9 @@ class JobReport(models.Model):
 
     def action_set_draft(self):
         for record in self:
+            if not record.can_edit and not self.env.user.has_group("jstech_job_report.group_job_report_admin"):
+                raise UserError(_("Não tem permissões para iniciar a elaboração deste relatório."))
+
             if record.status not in ("pending", "rejected", "late"):
                 raise UserError(_("Só é possível passar para elaboração a partir de Pendente, Rejeitado ou Atrasado."))
             record.status = "draft"
@@ -993,13 +1019,13 @@ class JobReport(models.Model):
 
     def action_done(self):
         for record in self:
-            if not self.env.user.has_group("jstech_job_report.group_job_report_admin") and not record.can_approve:
+            if not record.can_done and not self.env.user.has_group("jstech_job_report.group_job_report_admin"):
                 raise UserError(_("Não tem permissões para concluir este relatório."))
 
             if record.status != "approved":
                 raise UserError(_("Só é possível concluir relatórios aprovados."))
 
-            record.write({
+            record.with_context(skip_job_report_permission_check=True).write({
                 "status": "done",
             })
 

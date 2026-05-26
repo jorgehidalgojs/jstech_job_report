@@ -87,7 +87,6 @@ https://helpdesk.palace.co.mz
     "assets": {
         "web.assets_backend": [
             "jstech_job_report/static/src/css/dashboard.css",
-            "jstech_job_report/static/src/js/dashboard.js",
         ],
     },
 

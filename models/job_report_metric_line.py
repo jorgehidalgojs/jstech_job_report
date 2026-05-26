@@ -61,6 +61,28 @@ class JobReportMetricLine(models.Model):
 
     notes = fields.Text(string="Observações")
 
+    def _check_report_can_edit_metrics(self):
+        if self.env.user.has_group("jstech_job_report.group_job_report_admin"):
+            return
+
+        for record in self:
+            if record.report_id and not record.report_id.can_edit:
+                raise ValidationError(_("Não tem permissões para alterar métricas deste relatório."))
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super(JobReportMetricLine, self).create(vals_list)
+        records._check_report_can_edit_metrics()
+        return records
+
+    def write(self, vals):
+        self._check_report_can_edit_metrics()
+        return super(JobReportMetricLine, self).write(vals)
+
+    def unlink(self):
+        self._check_report_can_edit_metrics()
+        return super(JobReportMetricLine, self).unlink()
+
     @api.depends("planned_value", "actual_value")
     def _compute_achievement(self):
         for record in self:
