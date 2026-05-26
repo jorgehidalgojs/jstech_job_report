@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- MENU PRINCIPAL -->
+    <menuitem id="menu_strategic_performance_root"
+          name="Gestão Estratégica"
+          sequence="10"
+          web_icon="jstech_job_report,static/description/icon.png"
+          groups="jstech_job_report.group_job_report_user,jstech_job_report.group_goal_viewer,jstech_job_report.group_goal_manager,jstech_job_report.group_area_manager,jstech_job_report.group_executive_manager,jstech_job_report.group_job_report_admin"/>
+
+    <!-- DASHBOARD -->
+    <menuitem id="menu_dashboard"
+              name="Dashboard Executivo"
+              parent="menu_strategic_performance_root"
+              action="action_job_report_dashboard"
+              sequence="1"/>
+
+    <!-- OPERAÇÃO -->
+    <menuitem id="menu_job_report_operations"
+              name="Operação"
+              parent="menu_strategic_performance_root"
+              sequence="10"/>
+
+    <menuitem id="menu_job_report"
+              name="Relatórios"
+              parent="menu_job_report_operations"
+              action="action_job_report"
+              sequence="1"/>
+
+    <!-- CONFIGURAÇÃO (SIEMPRE AL FINAL) -->
+    <menuitem id="menu_strategic_performance_configuration"
+              name="Configuração"
+              parent="menu_strategic_performance_root"
+              sequence="90"/>
+
+    <menuitem id="menu_strategic_area"
+              name="Áreas Estratégicas"
+              parent="menu_strategic_performance_configuration"
+              action="action_strategic_area"
+              sequence="10"/>
+
+    <menuitem id="menu_strategic_goal"
+              name="Metas Estratégicas"
+              parent="menu_strategic_performance_configuration"
+              action="action_strategic_goal"
+              sequence="20"/>
+
+    <menuitem id="menu_strategic_goal_assignment"
+              name="Atribuições de Metas"
+              parent="menu_strategic_performance_configuration"
+              action="action_strategic_goal_assignment"
+              sequence="30"/>
+
+</odoo>

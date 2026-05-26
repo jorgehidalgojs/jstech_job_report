@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_job_report_tree" model="ir.ui.view">
+        <field name="name">job.report.tree</field>
+        <field name="model">job.report</field>
+        <field name="arch" type="xml">
+            <tree string="Relatórios"
+                  decoration-success="status == 'approved'"
+                  decoration-info="status == 'submitted'"
+                  decoration-warning="status == 'late'"
+                  decoration-danger="status == 'rejected'"
+                  decoration-muted="status in ('cancelled','done')">
+                <field name="name"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="area_id"/>
+                <field name="goal_id"/>
+                <field name="employee_id"/>
+                <field name="manager_id"/>
+                <field name="period_start"/>
+                <field name="period_end"/>
+                <field name="deadline_date"/>
+                <field name="status"/>
+                <field name="is_manual"/>
+                <field name="achievement_percentage"/>
+                <field name="final_score"/>
+                <field name="delay_days"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_job_report_form" model="ir.ui.view">
+        <field name="name">job.report.form</field>
+        <field name="model">job.report</field>
+        <field name="arch" type="xml">
+            <form string="Relatório Periódico">
+                <header>
+                    <button name="action_set_draft"
+                            type="object"
+                            string="Iniciar Elaboração"
+                            class="btn-secondary"
+                            attrs="{'invisible': [('status', 'not in', ('pending','rejected','late'))]}"/>
+
+                    <button name="action_submit"
+                            type="object"
+                            string="Submeter"
+                            class="btn-primary"
+                            attrs="{'invisible': [('can_submit', '=', False)]}"/>
+
+                    <button name="action_approve"
+                            type="object"
+                            string="Aprovar"
+                            class="btn-success"
+                            attrs="{'invisible': [('can_approve', '=', False)]}"/>
+
+                    <button name="action_reject"
+                            type="object"
+                            string="Rejeitar"
+                            class="btn-danger"
+                            attrs="{'invisible': [('can_reject', '=', False)]}"/>
+
+                    <button name="action_done"
+                            type="object"
+                            string="Concluir"
+                            class="btn-secondary"
+                            attrs="{'invisible': [('status', '!=', 'approved')]}"/>
+
+                    <button name="action_cancel"
+                            type="object"
+                            string="Cancelar"
+                            class="btn-secondary"
+                            attrs="{'invisible': [('can_cancel', '=', False)]}"/>
+
+                    <button name="action_generate_snapshot"
+                            type="object"
+                            string="Gerar Snapshot"
+                            class="btn-secondary"
+                            groups="jstech_job_report.group_executive_manager,jstech_job_report.group_job_report_admin"/>
+
+                    <field name="status"
+                           widget="statusbar"
+                           statusbar_visible="pending,draft,submitted,approved,rejected,late,done,cancelled"/>
+                </header>
+
+                <sheet>
+
+                    <group invisible="1">
+                        <field name="can_edit"/>
+                        <field name="can_submit"/>
+                        <field name="can_approve"/>
+                        <field name="can_reject"/>
+                        <field name="can_cancel"/>
+                        <field name="available_area_ids"/>
+                        <field name="available_goal_ids"/>
+                        <field name="employee_user_id"/>
+                        <field name="manager_user_id"/>
+                    </group>
+
+                    <div class="oe_button_box" name="button_box">
+                        <button type="object"
+                                name="action_generate_snapshot"
+                                class="oe_stat_button"
+                                icon="fa-line-chart"
+                                groups="jstech_job_report.group_executive_manager,jstech_job_report.group_job_report_admin">
+                            <field name="final_score" string="Score Final" widget="statinfo"/>
+                        </button>
+
+                        <button type="object"
+                                name="action_generate_snapshot"
+                                class="oe_stat_button"
+                                icon="fa-clock-o"
+                                groups="jstech_job_report.group_executive_manager,jstech_job_report.group_job_report_admin">
+                            <field name="delay_days" string="Dias de Atraso" widget="statinfo"/>
+                        </button>
+
+                        <button type="object"
+                                name="action_generate_snapshot"
+                                class="oe_stat_button"
+                                icon="fa-check-circle">
+                            <field name="achievement_percentage" string="% Cumprimento" widget="statinfo"/>
+                        </button>
+                    </div>
+
+                    <div class="oe_title">
+                        <h1>
+                            <field name="name" readonly="1"/>
+                        </h1>
+                        <div class="text-muted">
+                            Relatório periódico de trabalho, desempenho e acompanhamento de metas.
+                        </div>
+                    </div>
+
+                    <group string="Identificação e Enquadramento">
+                        <group string="Contexto Estratégico">
+                            <field name="company_id"
+                                   groups="base.group_multi_company"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+
+                            <field name="area_id"
+                                   domain="[('id', 'in', available_area_ids)]"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+
+                            <field name="goal_id"
+                                   domain="[('id', 'in', available_goal_ids)]"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+
+                            <field name="assignment_id"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}" invisible="1"/>
+
+                            <field name="is_manual" readonly="1" invisible="1" />
+                        </group>
+
+                        <group string="Responsáveis">
+                            <field name="employee_id"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+
+                            <field name="manager_id"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                        </group>
+                    </group>
+
+                    <group string="Janela Temporal">
+                        <group>
+                            <field name="period_start"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+
+                            <field name="period_end"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+
+                            <field name="deadline_date"
+                                   attrs="{'readonly': [('status', 'not in', ('pending','draft','rejected','late'))]}"/>
+                        </group>
+
+                        <group string="Rastreabilidade">
+                            <field name="submission_date" readonly="1"/>
+                            <field name="approved_date" readonly="1"/>
+                            <field name="rejected_date" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+
+                        <page string="Resumo Executivo"
+                              attrs="{'invisible': [('status', '=', 'cancelled')]}">
+
+                                <field name="summary"
+                                       nolabel="1"
+                                       placeholder="Apresente o resumo executivo do trabalho realizado no período..."
+                                       attrs="{'readonly': [('can_edit', '=', False)]}"/>
+
+                        </page>
+
+                        <page string="Relatório Detalhado"
+                              attrs="{'invisible': [('status', '=', 'cancelled')]}">
+
+                                <field name="report_html"
+                                       nolabel="1"
+                                       placeholder="Descreva em detalhe as atividades executadas, resultados alcançados e pontos relevantes..."
+                                       attrs="{'readonly': [('can_edit', '=', False)]}"/>
+
+                        </page>
+
+                        <page string="Entregáveis"
+                              attrs="{'invisible': [('status', '=', 'cancelled')]}">
+
+                                <field name="deliverables_done"
+                                       nolabel="1"
+                                       placeholder="Liste e descreva os entregáveis realizados durante o período..."
+                                       attrs="{'readonly': [('can_edit', '=', False)]}"/>
+
+                        </page>
+
+                        <page string="Obstáculos"
+                              attrs="{'invisible': [('status', '=', 'cancelled')]}">
+
+                                <field name="obstacles"
+                                       nolabel="1"
+                                       placeholder="Registe bloqueios, riscos, desvios ou dificuldades encontradas..."
+                                       attrs="{'readonly': [('can_edit', '=', False)]}"/>
+
+                        </page>
+
+                        <page string="Ações Corretivas"
+                              attrs="{'invisible': [('status', '=', 'cancelled')]}">
+
+                                <field name="corrective_actions"
+                                       nolabel="1"
+                                       placeholder="Descreva ações corretivas aplicadas ou propostas..."
+                                       attrs="{'readonly': [('can_edit', '=', False)]}"/>
+
+                        </page>
+
+                        <page string="Tarefas Relacionadas"
+                              attrs="{'invisible': [('status', '=', 'cancelled')]}">
+
+                                <field name="task_ids"
+                                       widget="many2many_tags"
+                                       attrs="{'readonly': [('can_edit', '=', False)]}"/>
+
+                        </page>
+
+                        <page string="Avaliação do Gestor"
+                              attrs="{'invisible': [('status', 'not in', ('submitted','approved','rejected','done'))]}">
+
+                            <group>
+                                <group string="Pontuação">
+                                    <field name="manager_score"
+                                           attrs="{'readonly': [('can_approve', '=', False)]}"/>
+                                    <field name="final_score" readonly="1"/>
+                                    <field name="performance_band" readonly="1"/>
+                                </group>
+
+                                <group string="Estado Analítico">
+                                    <field name="submitted_on_time" readonly="1"/>
+                                    <field name="delay_days" readonly="1"/>
+                                    <field name="risk_band" readonly="1"/>
+                                </group>
+                            </group>
+
+                            <group string="Feedback do Gestor">
+                                <field name="manager_feedback"
+                                       nolabel="1"
+                                       attrs="{'readonly': [('can_approve', '=', False)]}"/>
+                            </group>
+
+                            <group string="Motivo da Rejeição"
+                                   attrs="{'invisible': [('status', 'not in', ('submitted','rejected'))]}">
+                                <field name="rejection_reason"
+                                       nolabel="1"
+                                       attrs="{'readonly': [('can_reject', '=', False)]}"/>
+                            </group>
+                        </page>
+
+                        <page string="Medição"
+                              attrs="{'invisible': [('status', 'in', ('pending','draft','cancelled'))]}">
+
+                            <group>
+                                <group string="Indicador Principal">
+                                    <field name="periodicity" readonly="1"/>
+                                    <field name="metric_type" readonly="1"/>
+                                    <field name="unit_of_measure"
+                                           attrs="{'readonly': [('can_edit', '=', False)]}"/>
+                                    <field name="planned_value"
+                                           attrs="{'readonly': [('can_edit', '=', False)]}"/>
+                                    <field name="actual_value"
+                                           attrs="{'readonly': [('can_edit', '=', False)]}"/>
+                                    <field name="achievement_percentage" readonly="1"/>
+                                    <field name="deviation_value" readonly="1"/>
+                                </group>
+
+                                <group string="Qualidade e Consistência">
+                                    <field name="quality_score" readonly="1"/>
+                                    <field name="completeness_score" readonly="1"/>
+                                    <field name="consistency_score" readonly="1"/>
+                                    <field name="timeliness_status" readonly="1"/>
+                                    <field name="anomaly_flag" readonly="1"/>
+                                    <field name="needs_review_flag" readonly="1"/>
+                                </group>
+                            </group>
+
+                            <group string="Métricas Detalhadas">
+                                <field name="metric_line_ids"
+                                       attrs="{'readonly': [('can_edit', '=', False)]}">
+                                    <tree editable="bottom">
+                                        <field name="sequence"/>
+                                        <field name="metric_name"/>
+                                        <field name="metric_type"/>
+                                        <field name="planned_value"/>
+                                        <field name="actual_value"/>
+                                        <field name="achievement_percentage" readonly="1"/>
+                                        <field name="weight"/>
+                                        <field name="score" readonly="1"/>
+                                    </tree>
+                                </field>
+                            </group>
+                        </page>
+
+                        <page string="Inteligência e Metadados"
+                              groups="jstech_job_report.group_job_report_admin"
+                              attrs="{'invisible': [('id', '!=', False)]}">
+                            <group string="Metadados para Inteligência Artificial">
+                                <field name="ai_metadata_json" nolabel="1" readonly="1"/>
+                            </group>
+                        </page>
+
+                        <page string="Snapshots"
+                              groups="jstech_job_report.group_executive_manager,jstech_job_report.group_job_report_admin"
+                              attrs="{'invisible': [('id', '!=', False)]}">
+                            <field name="snapshot_ids" readonly="1">
+                                <tree>
+                                    <field name="snapshot_date"/>
+                                    <field name="status"/>
+                                    <field name="achievement_percentage"/>
+                                    <field name="delay_days"/>
+                                    <field name="final_score"/>
+                                    <field name="performance_band"/>
+                                    <field name="risk_band"/>
+                                    <field name="anomaly_flag"/>
+                                </tree>
+                            </field>
+                        </page>
+
+                        <page string="Comunicação"
+                              attrs="{'invisible': [('id', '!=', False)]}">
+                            <field name="message_follower_ids" widget="mail_followers"/>
+                            <field name="activity_ids" widget="mail_activity"/>
+                            <field name="message_ids" widget="mail_thread"/>
+                        </page>
+
+                    </notebook>
+
+
+                </sheet>
+                <div class="oe_chatter">
+                    <field name="message_follower_ids" widget="mail_followers"/>
+                    <field name="activity_ids" widget="mail_activity"/>
+                    <field name="message_ids" widget="mail_thread"/>
+                </div>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_job_report" model="ir.actions.act_window">
+        <field name="name">Relatórios</field>
+        <field name="res_model">job.report</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+</odoo>

@@ -1,0 +1,64 @@
+<odoo>
+    <data noupdate="1">
+        <!-- Regla para que los usuarios solo vean sus propios reportes o donde son gestores en su compañía -->
+        <record id="job_report_user_rule" model="ir.rule">
+            <field name="name">Job Reports: Usuarios</field>
+            <field name="model_id" ref="model_job_report"/>
+            <field name="domain_force">[
+                '|',
+                ('create_uid', '=', user.id),
+                '&amp;',
+                ('manager_ids', 'in', user.employee_id.id),
+                ('status', 'in', ['submitted', 'approved', 'rejected', 'done']),
+                ('company_id', 'in', user.company_ids.ids)
+                ]</field>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Regla para que los administradores puedan ver y gestionar todo en su compañía -->
+        <record id="job_report_admin_rule" model="ir.rule">
+            <field name="name">Job Reports: Administradores</field>
+            <field name="model_id" ref="model_job_report"/>
+            <field name="domain_force">[
+                ('company_id', 'in', user.company_ids.ids)
+            ]</field>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+
+        <!-- Regla para que los usuarios solo puedan leer áreas y objetivos en su compañía -->
+        <record id="estrategic_user_rule" model="ir.rule">
+            <field name="name">Estrategic: Usuarios</field>
+            <field name="model_id" ref="model_estrategic_area"/>
+            <field name="domain_force">[
+                ('company_id', 'in', user.company_ids.ids)
+            ]</field>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+        </record>
+
+        <!-- Regla para que los administradores gestionen áreas y objetivos en su compañía -->
+        <record id="estrategic_admin_rule" model="ir.rule">
+            <field name="name">Estrategic: Administradores</field>
+            <field name="model_id" ref="model_estrategic_area"/>
+            <field name="domain_force">[
+                ('company_id', 'in', user.company_ids.ids)
+            ]</field>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+        </record>
+    </data>
+</odoo>

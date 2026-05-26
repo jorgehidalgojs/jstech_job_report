@@ -1,0 +1,8 @@
+<odoo>
+    <menuitem id="menu_job_report_root" name="Relatórios de Trabalho" sequence="10"
+     web_icon="jstech_job_report,static/description/icon.png"/>
+    <menuitem id="menu_estrategic" name="Objetivos Estratégicos" parent="menu_job_report_root" sequence="20"/>
+    <menuitem id="menu_estrategic_area" name="Áreas Estratégicas" parent="menu_estrategic" action="action_estrategic_area" sequence="10"/>
+    <menuitem id="menu_estrategic_goal" name="Objetivos Estratégicos" parent="menu_estrategic" action="action_estrategic_goal" sequence="20"/>
+    <menuitem id="menu_job_report" name="Relatórios" parent="menu_job_report_root" action="action_job_report" sequence="11"/>
+</odoo>

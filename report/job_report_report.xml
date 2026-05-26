@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_report_job_report" model="ir.actions.report">
+            <field name="name">Relatório Periódico</field>
+            <field name="model">job.report</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">jstech_job_report.report_job_report_document</field>
+            <field name="report_file">jstech_job_report.report_job_report_document</field>
+            <field name="binding_model_id" ref="model_job_report"/>
+            <field name="binding_type">report</field>
+            <field name="print_report_name">'Relatorio - %s' % (object.name or '')</field>
+        </record>
+    </data>
+</odoo>

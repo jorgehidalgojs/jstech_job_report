@@ -1,0 +1,179 @@
+<odoo>
+    <record id="view_estrategic_area_tree" model="ir.ui.view">
+        <field name="name">estrategic.area.tree</field>
+        <field name="model">estrategic.area</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="description"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_estrategic_area_form" model="ir.ui.view">
+        <field name="name">estrategic.area.form</field>
+        <field name="model">estrategic.area</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <field name="name"/>
+                    <field name="description"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- Vista Tree -->
+    <record id="view_estrategic_goal_tree" model="ir.ui.view">
+        <field name="name">estrategic.goal.tree</field>
+        <field name="model">estrategic.goal</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="area_id"/>
+                <field name="description"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Vista Form -->
+    <record id="view_estrategic_goal_form" model="ir.ui.view">
+        <field name="name">estrategic.goal.form</field>
+        <field name="model">estrategic.goal</field>
+        <field name="arch" type="xml">
+            <form string="Objetivo Estratégico">
+                <sheet>
+                    <group>
+                        <field name="name"/>
+                        <field name="area_id"/>
+                        <field name="description"/>
+                        <field name="active"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_job_report_tree" model="ir.ui.view">
+        <field name="name">job.report.tree</field>
+        <field name="model">job.report</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="employee_id"/>
+                <field name="date_start"/>
+                <field name="date_end"/>
+                <field name="status"/>
+            </tree>
+        </field>
+    </record>
+
+<record id="view_job_report_form" model="ir.ui.view">
+    <field name="name">job.report.form</field>
+    <field name="model">job.report</field>
+    <field name="arch" type="xml">
+        <form string="Relatório de Trabalho">
+            <!-- Encabezado -->
+<header>
+                <field name="status" widget="statusbar"/>
+
+                <!-- Botón Submeter -->
+                <button name="action_submit" type="object" string="Submeter" class="btn-primary"
+                        attrs="{'invisible': [('status', '!=', 'draft')]}"/>
+
+                <!-- Botón Aprovar -->
+                <button name="action_approve" type="object" string="Aprovar" class="btn-success"
+                        attrs="{
+                            'invisible': [
+                                ('status', '!=', 'submitted'),
+                                ('is_manager', '=', False)
+                            ]
+                        }"/>
+
+                <!-- Botón Rejeitar -->
+                <button name="action_reject" type="object" string="Rejeitar" class="btn-danger"
+                        attrs="{
+                            'invisible': [
+                                ('status', '!=', 'submitted'),
+                                ('is_manager', '=', False)
+                            ]
+                        }"/>
+
+                <!-- Botón Cancelar -->
+                <button name="action_cancel" type="object" string="Cancelar" class="btn-secondary"
+                        attrs="{'invisible': [('status', 'not in', ['draft', 'submitted'])]}"/>
+            </header>
+            <sheet>
+                <!-- Informações principais -->
+                <field name="is_manager" invisible="1"/>
+                <group>
+                    <div class="oe_title">
+                        <h1>
+                           <field name="name" string="Título do Relatório" placeholder="Insira o título aqui"/>
+                        </h1>
+                    </div>
+                </group>
+
+                <group>
+                    <group>
+                        <field name="date_start" string="Data de Início"/>
+                        <field name="employee_id" string="Funcionário"/>
+                    </group>
+                    <group>
+                        <field name="date_end" string="Data de Fim"/>
+                        <field name="strategic_goal_id" string="Objetivo Estratégico"/>
+                        <field name="manager_ids" string="Gestores" widget="many2many_tags"/>
+                    </group>
+                </group>
+
+                <!-- Notebook para campos agrupados -->
+                <notebook>
+                    <!-- Página para Resumo e Tarefas -->
+                    <page string="Resumo e Tarefas">
+                        <group>
+                            <field name="summary" string="Resumo"/>
+                            <field name="task_ids" string="Tarefas Relacionadas"/>
+                        </group>
+                    </page>
+
+                    <!-- Página para o Relatório -->
+                    <page string="Relatório">
+                        <field name="report_body" string="Relatório" widget="html"/>
+                    </page>
+                    <page string="Feedback">
+                        <field name="feedback" string="Feedback" widget="html"/>
+                    </page>
+                </notebook>
+            </sheet>
+            <div class="oe_chatter">
+                <field name="message_follower_ids" widget="mail_followers"/>
+                <field name="message_ids" widget="mail_thread"/>
+            </div>
+        </form>
+    </field>
+</record>
+
+    <record id="action_job_report" model="ir.actions.act_window">
+        <field name="name">Relatórios de Trabalho</field>
+        <field name="res_model">job.report</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_estrategic_area" model="ir.actions.act_window">
+        <field name="name">Áreas Estratégicas</field>
+        <field name="res_model">estrategic.area</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record id="action_estrategic_goal" model="ir.actions.act_window">
+        <field name="name">Objetivos Estratégicos</field>
+        <field name="res_model">estrategic.goal</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p>
+                Utilize este módulo para gerenciar os Objetivos Estratégicos e suas Áreas relacionadas.
+            </p>
+        </field>
+    </record>
+</odoo>

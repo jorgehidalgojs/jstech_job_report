@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_job_report_document">
+
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+
+                <t t-call="web.external_layout">
+
+                    <div class="page">
+
+                        <!-- HEADER -->
+                        <h2 style="text-align:center; color:#2c3e50;">
+                            Relatório Executivo de Desempenho
+                        </h2>
+
+                        <p style="text-align:center; font-size:12px;">
+                            <strong>Empresa:</strong>
+                            <span t-esc="o.company_id.name"/>
+                        </p>
+
+                        <hr/>
+
+                        <!-- CONTEXTO -->
+                        <h3>Contexto Estratégico</h3>
+
+                        <table style="width:100%; font-size:12px;">
+                            <tr>
+                                <td>
+                                    <strong>Área:</strong>
+                                    <span t-esc="o.area_id.name"/>
+                                </td>
+                                <td>
+                                    <strong>Meta:</strong>
+                                    <span t-esc="o.goal_id.name"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Funcionário:</strong>
+                                    <span t-esc="o.employee_id.name"/>
+                                </td>
+                                <td>
+                                    <strong>Gestor:</strong>
+                                    <span t-esc="o.manager_id.name"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <strong>Período:</strong>
+                                    <span t-esc="o.period_start"/>
+                                    -
+                                    <span t-esc="o.period_end"/>
+                                </td>
+                                <td>
+                                    <strong>Estado:</strong>
+                                    <span t-esc="o.status"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <br/>
+
+                        <!-- KPIs -->
+                        <h3>Indicadores de Desempenho</h3>
+
+                        <table style="width:100%; border:1px solid #ccc; text-align:center;">
+                            <tr style="background:#f5f5f5;">
+                                <th>Planeado</th>
+                                <th>Real</th>
+                                <th>% Cumprimento</th>
+                                <th>Score Final</th>
+                                <th>Atraso (dias)</th>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <span t-esc="o.planned_value"/>
+                                </td>
+                                <td>
+                                    <span t-esc="o.actual_value"/>
+                                </td>
+                                <td><span t-esc="o.achievement_percentage"/>%
+                                </td>
+                                <td>
+                                    <span t-esc="o.final_score"/>
+                                </td>
+                                <td>
+                                    <span t-esc="o.delay_days"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <br/>
+
+                        <!-- RESUMO -->
+                        <h3>Resumo Executivo</h3>
+                        <div t-raw="o.summary or ''"/>
+
+                        <br/>
+
+                        <!-- RELATORIO -->
+                        <h3>Relatório Detalhado</h3>
+                        <div t-raw="o.report_html or ''"/>
+
+                        <br/>
+
+                        <!-- ENTREGÁVEIS -->
+                        <h3>Entregáveis</h3>
+                        <div t-raw="o.deliverables_done or ''"/>
+
+                        <br/>
+
+                        <!-- OBSTACULOS -->
+                        <h3>Obstáculos</h3>
+                        <div t-raw="o.obstacles or ''"/>
+
+                        <br/>
+
+                        <!-- ACCIONES -->
+                        <h3>Ações Corretivas</h3>
+                        <div t-raw="o.corrective_actions or ''"/>
+
+                        <br/>
+
+                        <!-- AVALIAÇÃO -->
+                        <h3>Avaliação do Gestor</h3>
+
+                        <table style="width:100%; font-size:12px;">
+                            <tr>
+                                <td>
+                                    <strong>Score:</strong>
+                                    <span t-esc="o.manager_score"/>
+                                </td>
+                                <td>
+                                    <strong>Desempenho:</strong>
+                                    <span t-esc="o.performance_band"/>
+                                </td>
+                                <td>
+                                    <strong>Risco:</strong>
+                                    <span t-esc="o.risk_band"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <br/>
+
+                        <div t-raw="o.manager_feedback or ''"/>
+
+                        <br/>
+
+                        <!-- RODAPÉ -->
+                        <p style="text-align:center; font-size:10px; color:#888;">
+                            Documento gerado automaticamente pelo sistema de Gestão Estratégica
+                        </p>
+
+                    </div>
+
+                </t>
+            </t>
+        </t>
+
+    </template>
+
+</odoo>

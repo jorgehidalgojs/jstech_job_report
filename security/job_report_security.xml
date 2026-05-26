@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="0">
+
+        <!-- CATEGORIA -->
+        <record id="module_category_strategic_performance" model="ir.module.category">
+            <field name="name">Gestão Estratégica</field>
+            <field name="sequence">30</field>
+        </record>
+
+        <!-- GRUPOS -->
+        <record id="group_job_report_user" model="res.groups">
+            <field name="name">Funcionário</field>
+            <field name="category_id" ref="jstech_job_report.module_category_strategic_performance"/>
+        </record>
+
+        <record id="group_goal_viewer" model="res.groups">
+            <field name="name">Visualizador</field>
+            <field name="category_id" ref="jstech_job_report.module_category_strategic_performance"/>
+        </record>
+
+        <record id="group_goal_manager" model="res.groups">
+            <field name="name">Gestor de Meta</field>
+            <field name="category_id" ref="jstech_job_report.module_category_strategic_performance"/>
+        </record>
+
+        <record id="group_area_manager" model="res.groups">
+            <field name="name">Gestor de Área</field>
+            <field name="category_id" ref="jstech_job_report.module_category_strategic_performance"/>
+        </record>
+
+        <record id="group_executive_manager" model="res.groups">
+            <field name="name">Gestor Executivo</field>
+            <field name="category_id" ref="jstech_job_report.module_category_strategic_performance"/>
+        </record>
+
+        <record id="group_job_report_admin" model="res.groups">
+            <field name="name">Administrador</field>
+            <field name="category_id" ref="jstech_job_report.module_category_strategic_performance"/>
+            <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+        </record>
+
+        <!-- =========================================================
+             ÁREAS ESTRATÉGICAS
+        ========================================================== -->
+
+        <!-- Funcionário: vê apenas áreas onde trabalha ou onde tem metas atribuídas -->
+        <record id="rule_strategic_area_employee" model="ir.rule">
+            <field name="name">Área Estratégica - Funcionário</field>
+            <field name="model_id" ref="model_strategic_area"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    '|',
+                    ('employee_ids.user_id', '=', user.id),
+                    ('goal_ids.assignment_ids.employee_id.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <!-- Visualizador: vê apenas áreas onde foi definido como visualizador -->
+        <record id="rule_strategic_area_viewer" model="ir.rule">
+            <field name="name">Área Estratégica - Visualizador</field>
+            <field name="model_id" ref="model_strategic_area"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_goal_viewer'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    ('viewer_ids', 'in', [user.id])
+                ]
+            </field>
+        </record>
+
+        <!-- Gestor de área: vê áreas onde é gestor -->
+        <record id="rule_strategic_area_manager" model="ir.rule">
+            <field name="name">Área Estratégica - Gestor de Área</field>
+            <field name="model_id" ref="model_strategic_area"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_area_manager'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    ('manager_ids.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <!-- Executivo e administrador: vêem por companhia -->
+        <record id="rule_strategic_area_executive" model="ir.rule">
+            <field name="name">Área Estratégica - Executivo</field>
+            <field name="model_id" ref="model_strategic_area"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_executive_manager')), (4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- =========================================================
+             METAS
+        ========================================================== -->
+
+        <!-- Funcionário: vê apenas metas às quais está atribuído -->
+        <record id="rule_strategic_goal_employee" model="ir.rule">
+            <field name="name">Meta - Funcionário</field>
+            <field name="model_id" ref="model_strategic_goal"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    ('assignment_ids.employee_id.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <!-- Visualizador: vê apenas metas onde é visualizador ou metas de áreas onde é visualizador -->
+        <record id="rule_strategic_goal_viewer" model="ir.rule">
+            <field name="name">Meta - Visualizador</field>
+            <field name="model_id" ref="model_strategic_goal"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_goal_viewer'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    '|',
+                    ('viewer_ids', 'in', [user.id]),
+                    ('area_id.viewer_ids', 'in', [user.id])
+                ]
+            </field>
+        </record>
+
+        <!-- Gestor de meta: vê apenas metas onde é gestor específico -->
+        <record id="rule_strategic_goal_manager" model="ir.rule">
+            <field name="name">Meta - Gestor de Meta</field>
+            <field name="model_id" ref="model_strategic_goal"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_goal_manager'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    ('manager_ids.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <!-- Gestor de área: vê metas das áreas sob sua responsabilidade -->
+        <record id="rule_strategic_goal_area_manager" model="ir.rule">
+            <field name="name">Meta - Gestor de Área</field>
+            <field name="model_id" ref="model_strategic_goal"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_area_manager'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    ('area_id.manager_ids.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <record id="rule_strategic_goal_executive" model="ir.rule">
+            <field name="name">Meta - Executivo</field>
+            <field name="model_id" ref="model_strategic_goal"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_executive_manager')), (4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- =========================================================
+             ATRIBUIÇÕES
+        ========================================================== -->
+
+        <record id="rule_assignment_employee" model="ir.rule">
+            <field name="name">Atribuição - Funcionário</field>
+            <field name="model_id" ref="model_strategic_goal_assignment"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    ('employee_id.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <record id="rule_assignment_manager" model="ir.rule">
+            <field name="name">Atribuição - Gestores</field>
+            <field name="model_id" ref="model_strategic_goal_assignment"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_goal_manager')), (4, ref('jstech_job_report.group_area_manager'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    '|',
+                    ('manager_id.user_id', '=', user.id),
+                    ('goal_id.area_id.manager_ids.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <record id="rule_assignment_executive" model="ir.rule">
+            <field name="name">Atribuição - Executivo</field>
+            <field name="model_id" ref="model_strategic_goal_assignment"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_executive_manager')), (4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- =========================================================
+             RELATÓRIOS
+        ========================================================== -->
+
+        <!-- Funcionário: vê apenas seus próprios relatórios -->
+        <record id="rule_job_report_employee" model="ir.rule">
+            <field name="name">Relatório - Funcionário</field>
+            <field name="model_id" ref="model_job_report"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    ('employee_id.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <!-- Visualizador: vê apenas relatórios das metas/áreas que visualiza -->
+        <record id="rule_job_report_viewer" model="ir.rule">
+            <field name="name">Relatório - Visualizador</field>
+            <field name="model_id" ref="model_job_report"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_goal_viewer'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    '|',
+                    ('goal_id.viewer_ids', 'in', [user.id]),
+                    ('area_id.viewer_ids', 'in', [user.id])
+                ]
+            </field>
+        </record>
+
+        <!-- Gestor de meta: vê relatórios das metas onde é gestor -->
+        <record id="rule_job_report_goal_manager" model="ir.rule">
+            <field name="name">Relatório - Gestor de Meta</field>
+            <field name="model_id" ref="model_job_report"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_goal_manager'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    '|',
+                    ('manager_id.user_id', '=', user.id),
+                    ('goal_id.manager_ids.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <!-- Gestor de área: vê relatórios das áreas sob sua responsabilidade -->
+        <record id="rule_job_report_area_manager" model="ir.rule">
+            <field name="name">Relatório - Gestor de Área</field>
+            <field name="model_id" ref="model_job_report"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_area_manager'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('company_id', 'in', company_ids),
+                    ('area_id.manager_ids.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <record id="rule_job_report_executive" model="ir.rule">
+            <field name="name">Relatório - Executivo</field>
+            <field name="model_id" ref="model_job_report"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_executive_manager')), (4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- =========================================================
+             MÉTRICAS
+        ========================================================== -->
+
+        <record id="rule_metric_line_from_report" model="ir.rule">
+            <field name="name">Métrica - Acesso pelo Relatório</field>
+            <field name="model_id" ref="model_job_report_metric_line"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user')), (4, ref('jstech_job_report.group_goal_viewer')), (4, ref('jstech_job_report.group_goal_manager')), (4, ref('jstech_job_report.group_area_manager')), (4, ref('jstech_job_report.group_executive_manager')), (4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="domain_force">[('report_id.company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- =========================================================
+             SNAPSHOTS
+        ========================================================== -->
+
+        <record id="rule_snapshot_executive" model="ir.rule">
+            <field name="name">Snapshot - Executivo</field>
+            <field name="model_id" ref="model_job_report_snapshot"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_executive_manager')), (4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+        </record>
+
+    </data>
+</odoo>

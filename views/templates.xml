@@ -1,0 +1,127 @@
+<odoo>
+    <template id="job_report_template">
+            <t t-call="web.basic_layout">
+                <t t-foreach="docs" t-as="doc">
+                    <div class="page">
+                        <!-- Cabeçalho -->
+                        <h1 style="text-align: center;">Relatório de Trabalho</h1>
+                        <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+                            <tr>
+                                <td style="width: 50%; padding: 5px; border: 1px solid #000;">
+                                    <strong>Funcionário:</strong>
+                                    <span t-field="doc.employee_id.name"/>
+                                </td>
+                                <td style="width: 50%; padding: 5px; border: 1px solid #000;">
+                                    <strong>Período:</strong>
+                                    <span t-field="doc.date_start"/>
+                                    -
+                                    <span t-field="doc.date_end"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px; border: 1px solid #000;">
+                                    <strong>Objetivo:</strong>
+                                    <span t-field="doc.strategic_goal_id.name"/>
+                                </td>
+                                <td style="padding: 5px; border: 1px solid #000;">
+                                    <strong>Área:</strong>
+                                    <span t-field="doc.strategic_goal_id.area_id.name"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding: 5px; border: 1px solid #000;">
+                                    <strong>Estado:</strong>
+                                    <span t-field="doc.status"/>
+                                </td>
+                                <td style="padding: 5px; border: 1px solid #000;">
+                                    <strong>Gestores:</strong>
+                                    <ul>
+                                        <t t-foreach="doc.manager_ids" t-as="manager">
+                                            <li>
+                                                <span t-field="manager.name"/>
+                                            </li>
+                                        </t>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Resumo -->
+                        <h2>Resumo</h2>
+                        <table style="width: 100%; border: 1px solid #000; margin-bottom: 20px;">
+                            <tr>
+                                <td style="padding: 10px;">
+                                    <p t-field="doc.summary"/>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Relatório -->
+                        <h2>Relatório</h2>
+                        <table style="width: 100%; border: 1px solid #000; margin-bottom: 20px;">
+                            <tr>
+                                <td style="padding: 10px;">
+                                    <div t-field="doc.report_body"/>
+                                </td>
+                            </tr>
+                        </table>
+                        <!-- Tarefas Relacionadas -->
+                        <h2>Tarefas Relacionadas</h2>
+                        <table style="width: 100%; border: 1px solid #000; margin-bottom: 40px;">
+                            <tr>
+                                <td style="padding: 10px;">
+                                    <ul>
+                                        <t t-foreach="doc.task_ids" t-as="task">
+                                            <li>
+                                                <span t-field="task.name"/>
+                                            </li>
+                                        </t>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </table>
+                        <!-- Feedback -->
+                        <h2>Feedback</h2>
+                        <table style="width: 100%; border: 1px solid #000; margin-bottom: 40px;">
+                            <tr>
+                                <td style="padding: 10px;">
+                                    <p t-field="doc.feedback"/>
+                                </td>
+                            </tr>
+                        </table>
+
+
+                        <!-- Assinaturas -->
+                        <table style="width: 100%; border-collapse: collapse; margin-top: 40px;">
+                            <tr>
+                                <td style="width: 50%; text-align: center; padding: 20px;">
+                                    <strong>Gestor</strong>
+                                    <br/>
+                                    <br/>
+                                    <br/>
+                                    ____________________________
+                                </td>
+                                <td style="width: 50%; text-align: center; padding: 20px;">
+                                    <strong>Avaliado</strong>
+                                    <br/>
+                                    <br/>
+                                    <br/>
+                                    ____________________________
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </t>
+            </t>
+    </template>
+
+    <record id="action_job_report_template" model="ir.actions.report">
+        <field name="name">Relatório de Trabalho</field>
+        <field name="model">job.report</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">jstech_job_report.job_report_template</field>
+        <field name="report_file">jstech_job_report.job_report_template</field>
+        <field name="binding_model_id" ref="model_job_report"/>
+        <field name="binding_type">report</field>
+    </record>
+</odoo>

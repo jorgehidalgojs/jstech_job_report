@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- =========================================================
+         TREE
+    ========================================================== -->
+    <record id="view_strategic_goal_assignment_tree" model="ir.ui.view">
+        <field name="name">strategic.goal.assignment.tree</field>
+        <field name="model">strategic.goal.assignment</field>
+        <field name="arch" type="xml">
+            <tree string="Atribuições de Metas">
+                <field name="goal_id"/>
+                <field name="area_id"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="employee_id"/>
+                <field name="manager_id"/>
+                <field name="user_id"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         FORM
+    ========================================================== -->
+    <record id="view_strategic_goal_assignment_form" model="ir.ui.view">
+        <field name="name">strategic.goal.assignment.form</field>
+        <field name="model">strategic.goal.assignment</field>
+        <field name="arch" type="xml">
+            <form string="Atribuição de Meta">
+                <sheet>
+                    <div class="oe_title">
+                        <h1>Atribuição de Meta</h1>
+                    </div>
+
+                    <group>
+                        <group string="Referência Estratégica">
+                            <field name="goal_id"/>
+                            <field name="area_id" readonly="1"/>
+                            <field name="company_id" readonly="1" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Responsabilidade">
+                            <field name="employee_id"/>
+                            <field name="manager_id"/>
+                            <field name="user_id" readonly="1"/>
+                            <field name="active"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         SEARCH
+    ========================================================== -->
+    <record id="view_strategic_goal_assignment_search" model="ir.ui.view">
+        <field name="name">strategic.goal.assignment.search</field>
+        <field name="model">strategic.goal.assignment</field>
+        <field name="arch" type="xml">
+            <search string="Pesquisar Atribuições">
+                <field name="goal_id"/>
+                <field name="employee_id"/>
+                <field name="manager_id"/>
+                <field name="area_id"/>
+                <field name="company_id"/>
+
+                <filter string="Ativas" name="filter_active" domain="[('active', '=', True)]"/>
+                <filter string="Inativas" name="filter_inactive" domain="[('active', '=', False)]"/>
+
+                <group expand="0" string="Agrupar Por">
+                    <filter string="Meta" name="group_by_goal" context="{'group_by': 'goal_id'}"/>
+                    <filter string="Área" name="group_by_area" context="{'group_by': 'area_id'}"/>
+                    <filter string="Companhia" name="group_by_company" context="{'group_by': 'company_id'}"/>
+                    <filter string="Gestor" name="group_by_manager" context="{'group_by': 'manager_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         ACTION
+    ========================================================== -->
+    <record id="action_strategic_goal_assignment" model="ir.actions.act_window">
+        <field name="name">Atribuições</field>
+        <field name="res_model">strategic.goal.assignment</field>
+        <field name="view_mode">tree,form</field>
+        <field name="search_view_id" ref="view_strategic_goal_assignment_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Crie a primeira atribuição</p>
+            <p>Associe funcionários às metas estratégicas e defina o gestor responsável por acompanhamento.</p>
+        </field>
+    </record>
+
+</odoo>

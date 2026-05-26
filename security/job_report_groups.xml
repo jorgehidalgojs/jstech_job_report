@@ -1,0 +1,13 @@
+<odoo>
+    <data noupdate="1">
+        <!-- Grupo para usuarios regulares -->
+        <record id="group_job_report_user" model="res.groups">
+            <field name="name">Usuario de Job Report</field>
+        </record>
+
+        <!-- Grupo para administradores -->
+        <record id="group_job_report_admin" model="res.groups">
+            <field name="name">Administrador de Job Report</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_job_report_dashboard_kanban" model="ir.ui.view">
+        <field name="name">job.report.dashboard.kanban</field>
+        <field name="model">job.report</field>
+        <field name="arch" type="xml">
+            <kanban class="o_kanban_dashboard">
+                <field name="name"/>
+                <field name="company_id"/>
+                <field name="area_id"/>
+                <field name="goal_id"/>
+                <field name="employee_id"/>
+                <field name="manager_id"/>
+                <field name="status"/>
+                <field name="executive_status"/>
+                <field name="final_score"/>
+                <field name="achievement_percentage"/>
+                <field name="delay_days"/>
+                <field name="risk_band"/>
+                <field name="performance_band"/>
+                <field name="ai_insight_html"/>
+                <field name="ai_recommendation_html"/>
+
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="oe_kanban_global_click o_spm_card">
+
+                            <div class="o_spm_header">
+                                <div>
+                                    <strong><field name="name"/></strong>
+                                    <div class="o_spm_subtitle">
+                                        <field name="area_id"/> · <field name="goal_id"/>
+                                    </div>
+                                </div>
+                                <div class="o_spm_status">
+                                    <field name="executive_status"/>
+                                </div>
+                            </div>
+
+                            <div class="o_spm_metrics">
+                                <div class="o_spm_metric">
+                                    <span class="o_spm_label">Score Final</span>
+                                    <span class="o_spm_value"><field name="final_score"/></span>
+                                </div>
+                                <div class="o_spm_metric">
+                                    <span class="o_spm_label">Cumprimento</span>
+                                    <span class="o_spm_value"><field name="achievement_percentage"/>%</span>
+                                </div>
+                                <div class="o_spm_metric">
+                                    <span class="o_spm_label">Atraso</span>
+                                    <span class="o_spm_value"><field name="delay_days"/> dias</span>
+                                </div>
+                            </div>
+
+                            <div class="o_spm_context">
+                                <div><strong>Funcionário:</strong> <field name="employee_id"/></div>
+                                <div><strong>Gestor:</strong> <field name="manager_id"/></div>
+                                <div><strong>Estado:</strong> <field name="status"/></div>
+                            </div>
+
+                            <div class="o_spm_insight">
+                                <strong>Insight Inteligente</strong>
+                                <field name="ai_insight_html"/>
+                            </div>
+
+                            <div class="o_spm_recommendation">
+                                <strong>Recomendação</strong>
+                                <field name="ai_recommendation_html"/>
+                            </div>
+
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <record id="view_job_report_graph_score_area" model="ir.ui.view">
+        <field name="name">job.report.graph.score.area</field>
+        <field name="model">job.report</field>
+        <field name="arch" type="xml">
+            <graph string="Score por Área" type="bar">
+                <field name="area_id" type="row"/>
+                <field name="final_score" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <record id="view_job_report_pivot_executive" model="ir.ui.view">
+        <field name="name">job.report.pivot.executive</field>
+        <field name="model">job.report</field>
+        <field name="arch" type="xml">
+            <pivot string="Análise Executiva">
+                <field name="company_id" type="row"/>
+                <field name="area_id" type="row"/>
+                <field name="goal_id" type="row"/>
+                <field name="final_score" type="measure"/>
+                <field name="achievement_percentage" type="measure"/>
+                <field name="delay_days" type="measure"/>
+                <field name="completeness_score" type="measure"/>
+                <field name="consistency_score" type="measure"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="action_job_report_dashboard" model="ir.actions.act_window">
+        <field name="name">Dashboard Executivo</field>
+        <field name="res_model">job.report</field>
+        <field name="view_mode">kanban,graph,pivot,tree,form</field>
+        <field name="view_id" ref="view_job_report_dashboard_kanban"/>
+    </record>
+
+</odoo>
