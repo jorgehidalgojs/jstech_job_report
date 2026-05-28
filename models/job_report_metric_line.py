@@ -67,7 +67,10 @@ class JobReportMetricLine(models.Model):
 
         for record in self:
             if record.report_id and not record.report_id.can_edit:
-                raise ValidationError(_("Não tem permissões para alterar métricas deste relatório."))
+                raise ValidationError(_(
+                    "Não é possível alterar as métricas deste relatório.\n\n"
+                    "Causa provável: o relatório já foi submetido, aprovado, concluído/cancelado, ou não pertence ao funcionário do utilizador atual."
+                ))
 
     @api.model_create_multi
     def create(self, vals_list):

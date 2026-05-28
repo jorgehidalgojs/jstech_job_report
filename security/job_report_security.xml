@@ -280,9 +280,65 @@
         ========================================================== -->
 
         <record id="rule_metric_line_from_report" model="ir.rule">
-            <field name="name">Métrica - Acesso pelo Relatório</field>
+            <field name="name">Métrica - Funcionário</field>
             <field name="model_id" ref="model_job_report_metric_line"/>
-            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user')), (4, ref('jstech_job_report.group_goal_viewer')), (4, ref('jstech_job_report.group_goal_manager')), (4, ref('jstech_job_report.group_area_manager')), (4, ref('jstech_job_report.group_executive_manager')), (4, ref('jstech_job_report.group_job_report_admin'))]"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_job_report_user'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('report_id.company_id', 'in', company_ids),
+                    ('report_id.employee_id.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <record id="rule_metric_line_viewer" model="ir.rule">
+            <field name="name">Métrica - Visualizador</field>
+            <field name="model_id" ref="model_job_report_metric_line"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_goal_viewer'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('report_id.company_id', 'in', company_ids),
+                    '|',
+                    ('report_id.goal_id.viewer_ids', 'in', [user.id]),
+                    ('report_id.area_id.viewer_ids', 'in', [user.id])
+                ]
+            </field>
+        </record>
+
+        <record id="rule_metric_line_goal_manager" model="ir.rule">
+            <field name="name">Métrica - Gestor de Meta</field>
+            <field name="model_id" ref="model_job_report_metric_line"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_goal_manager'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('report_id.company_id', 'in', company_ids),
+                    '|',
+                    ('report_id.manager_id.user_id', '=', user.id),
+                    ('report_id.goal_id.manager_ids.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <record id="rule_metric_line_area_manager" model="ir.rule">
+            <field name="name">Métrica - Gestor de Área</field>
+            <field name="model_id" ref="model_job_report_metric_line"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_area_manager'))]"/>
+            <field name="domain_force">
+                [
+                    '&amp;',
+                    ('report_id.company_id', 'in', company_ids),
+                    ('report_id.area_id.manager_ids.user_id', '=', user.id)
+                ]
+            </field>
+        </record>
+
+        <record id="rule_metric_line_executive" model="ir.rule">
+            <field name="name">Métrica - Executivo</field>
+            <field name="model_id" ref="model_job_report_metric_line"/>
+            <field name="groups" eval="[(4, ref('jstech_job_report.group_executive_manager')), (4, ref('jstech_job_report.group_job_report_admin'))]"/>
             <field name="domain_force">[('report_id.company_id', 'in', company_ids)]</field>
         </record>
 

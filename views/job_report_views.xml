@@ -235,6 +235,7 @@
                         </page>
 
                         <page string="Tarefas Relacionadas"
+                              groups="project.group_project_user"
                               attrs="{'invisible': [('status', '=', 'cancelled')]}">
 
                                 <field name="task_ids"

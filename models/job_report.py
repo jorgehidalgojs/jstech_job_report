@@ -3,6 +3,7 @@ import json
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError, ValidationError
+from odoo.tools import html2plaintext
 
 
 class JobReport(models.Model):
@@ -395,40 +396,6 @@ class JobReport(models.Model):
         ("critical", "Crítico"),
     ], string="Estado Executivo", compute="_compute_ai_insights", store=True)
 
-    def _sync_metric_lines_from_goal(self):
-        MetricLine = self.env["job.report.metric.line"]
-
-        for record in self:
-            if not record.goal_id:
-                continue
-
-            existing_codes = record.metric_line_ids.mapped("metric_code")
-            existing_names = record.metric_line_ids.mapped("metric_name")
-
-            for metric in record.goal_id.specific_metric_ids.filtered(lambda m: m.active):
-                already_exists = False
-
-                if metric.metric_code and metric.metric_code in existing_codes:
-                    already_exists = True
-
-                if not metric.metric_code and metric.metric_name in existing_names:
-                    already_exists = True
-
-                if already_exists:
-                    continue
-
-                MetricLine.create({
-                    "report_id": record.id,
-                    "sequence": metric.sequence,
-                    "metric_name": metric.metric_name,
-                    "metric_code": metric.metric_code,
-                    "description": metric.description,
-                    "metric_type": metric.metric_type,
-                    "unit_of_measure": metric.unit_of_measure,
-                    "planned_value": metric.planned_value,
-                    "weight": metric.weight,
-                })
-
     @api.depends("metric_line_ids")
     def _compute_metric_count(self):
         for record in self:
@@ -557,6 +524,16 @@ class JobReport(models.Model):
     def _get_current_employee(self):
         return self.env["hr.employee"].sudo().search([("user_id", "=", self.env.user.id)], limit=1)
 
+    def _html_has_content(self, value):
+        return bool((html2plaintext(value or "") or "").strip())
+
+    def _format_field_names(self, field_names):
+        labels = []
+        for field_name in sorted(field_names):
+            field = self._fields.get(field_name)
+            labels.append(field.string if field else field_name)
+        return ", ".join(labels)
+
     @api.depends("employee_id")
     def _compute_available_area_ids(self):
         current_employee = self._get_current_employee()
@@ -569,7 +546,7 @@ class JobReport(models.Model):
                 record.available_area_ids = area_model.search([
                     "|",
                     ("employee_ids", "in", current_employee.id),
-                    ("manager_ids", "in", current_employee.id),
+                    ("goal_ids.assignment_ids.employee_id", "=", current_employee.id),
                 ])
             else:
                 record.available_area_ids = area_model.browse([])
@@ -587,7 +564,7 @@ class JobReport(models.Model):
             if self.env.user.has_group("jstech_job_report.group_job_report_admin"):
                 record.available_goal_ids = goal_model.search(domain)
             elif current_employee:
-                domain += ["|", ("employee_ids", "in", current_employee.id), ("manager_ids", "in", current_employee.id)]
+                domain += [("assignment_ids.employee_id", "=", current_employee.id)]
                 record.available_goal_ids = goal_model.search(domain)
             else:
                 record.available_goal_ids = goal_model.browse([])
@@ -864,7 +841,12 @@ class JobReport(models.Model):
 
                 allowed = manager_edit_fields
                 if not protected_fields.issubset(allowed):
-                    raise UserError(_("Após a submissão, apenas os campos de avaliação do gestor podem ser alterados."))
+                    invalid_fields = protected_fields - allowed
+                    raise UserError(
+                        _("Após a submissão, apenas o gestor pode preencher a avaliação.\n\n"
+                          "Campos bloqueados nesta etapa: %s")
+                        % record._format_field_names(invalid_fields)
+                    )
 
             if record.status in ("pending", "draft", "rejected", "late"):
                 if not record.can_edit:
@@ -881,7 +863,12 @@ class JobReport(models.Model):
                 }
 
                 if not protected_fields.issubset(allowed):
-                    raise UserError(_("Existem campos que não podem ser alterados neste estado."))
+                    invalid_fields = protected_fields - allowed
+                    raise UserError(
+                        _("Não é possível alterar estes campos durante a elaboração/correção: %s.\n\n"
+                          "Nesta etapa o funcionário deve preencher o conteúdo do relatório, valores reais, métricas, datas e meta.")
+                        % record._format_field_names(invalid_fields)
+                    )
 
         res = super(JobReport, self).write(vals)
 
@@ -924,39 +911,45 @@ class JobReport(models.Model):
     def action_submit(self):
         for record in self:
             if not record.can_submit and not self.env.user.has_group("jstech_job_report.group_job_report_admin"):
-                raise UserError(_("Não tem permissões para submeter este relatório."))
+                raise UserError(_(
+                    "Não é possível submeter este relatório.\n\n"
+                    "Causa provável: o relatório não pertence ao seu funcionário, o seu utilizador não está ligado a um funcionário, "
+                    "ou o relatório já saiu da etapa de elaboração/correção."
+                ))
 
             if record.status not in ("pending", "draft", "rejected", "late"):
                 raise UserError(
-                    _("Só é possível submeter relatórios pendentes, em elaboração, rejeitados ou atrasados."))
+                    _("Não é possível submeter no estado atual: %s.\n\n"
+                      "A submissão só é permitida quando o relatório está Pendente, Em Elaboração, Rejeitado ou Atrasado.")
+                    % dict(record._fields["status"].selection).get(record.status, record.status)
+                )
 
-            missing = []
+            blockers = []
 
             if not record.area_id:
-                missing.append(_("Área Estratégica"))
+                blockers.append(_("Área Estratégica: selecione a área relacionada ao trabalho reportado."))
             if not record.goal_id:
-                missing.append(_("Meta"))
+                blockers.append(_("Meta: selecione a meta atribuída ao funcionário para este período."))
             if not record.employee_id:
-                missing.append(_("Funcionário"))
+                blockers.append(_("Funcionário: o utilizador atual não está associado a um funcionário. Contacte o administrador."))
             if not record.manager_id:
-                missing.append(_("Gestor Responsável"))
+                blockers.append(_("Gestor Responsável: a meta/atribuição não tem gestor definido. Contacte o gestor da meta ou administrador."))
             if not record.period_start:
-                missing.append(_("Início do Período"))
+                blockers.append(_("Início do Período: informe a data inicial do período reportado."))
             if not record.period_end:
-                missing.append(_("Fim do Período"))
+                blockers.append(_("Fim do Período: informe a data final do período reportado."))
             if not record.deadline_date:
-                missing.append(_("Prazo de Entrega"))
-            if not record.summary:
-                missing.append(_("Resumo Executivo"))
-            if not record.report_html:
-                missing.append(_("Relatório Detalhado"))
-            if not record.deliverables_done:
-                missing.append(_("Entregáveis Realizados"))
-
-            if missing:
+                blockers.append(_("Prazo de Entrega: informe a data limite de submissão."))
+            if not self._html_has_content(record.summary):
+                blockers.append(_("Resumo Executivo: escreva uma síntese do que foi realizado e do resultado principal."))
+            if not self._html_has_content(record.report_html):
+                blockers.append(_("Relatório Detalhado: descreva as atividades executadas, evidências, desvios e contexto relevante."))
+            if not self._html_has_content(record.deliverables_done):
+                blockers.append(_("Entregáveis Realizados: indique o que foi entregue ou concluído no período."))
+            if blockers:
                 raise UserError(
-                    _("Antes de submeter, preencha os seguintes campos obrigatórios:\n- %s")
-                    % "\n- ".join(missing)
+                    _("O relatório ainda não pode ser submetido.\n\nCorrija os pontos abaixo:\n- %s")
+                    % "\n- ".join(blockers)
                 )
 
             record.write({
@@ -1127,53 +1120,53 @@ class JobReport(models.Model):
         for report in reports:
             report.status = "late"
 
-def _sync_metric_lines_from_goal(self):
-    MetricLine = self.env["job.report.metric.line"]
+    def _sync_metric_lines_from_goal(self):
+        MetricLine = self.env["job.report.metric.line"]
 
-    for record in self:
-        if not record.goal_id:
-            continue
-
-        existing_codes = record.metric_line_ids.mapped("metric_code")
-        existing_names = record.metric_line_ids.mapped("metric_name")
-
-        # 1) Copiar indicador principal da meta
-        main_metric_code = "MAIN_GOAL_INDICATOR"
-
-        if main_metric_code not in existing_codes:
-            MetricLine.create({
-                "report_id": record.id,
-                "sequence": 1,
-                "metric_name": _("Indicador Principal da Meta"),
-                "metric_code": main_metric_code,
-                "description": record.goal_id.metric_description or record.goal_id.description or "",
-                "metric_type": record.goal_id.metric_type,
-                "unit_of_measure": record.goal_id.unit_of_measure,
-                "planned_value": record.goal_id.target_value,
-                "weight": record.goal_id.weight or 1.0,
-            })
-
-        # 2) Copiar métricas específicas configuradas na meta
-        for metric in record.goal_id.specific_metric_ids.filtered(lambda m: m.active):
-            already_exists = False
-
-            if metric.metric_code and metric.metric_code in existing_codes:
-                already_exists = True
-
-            if not metric.metric_code and metric.metric_name in existing_names:
-                already_exists = True
-
-            if already_exists:
+        for record in self:
+            if not record.goal_id:
                 continue
 
-            MetricLine.create({
-                "report_id": record.id,
-                "sequence": metric.sequence or 10,
-                "metric_name": metric.metric_name,
-                "metric_code": metric.metric_code,
-                "description": metric.description,
-                "metric_type": metric.metric_type,
-                "unit_of_measure": metric.unit_of_measure,
-                "planned_value": metric.planned_value,
-                "weight": metric.weight,
-            })
+            existing_codes = record.metric_line_ids.mapped("metric_code")
+            existing_names = record.metric_line_ids.mapped("metric_name")
+
+            # 1) Copiar indicador principal da meta
+            main_metric_code = "MAIN_GOAL_INDICATOR"
+
+            if main_metric_code not in existing_codes:
+                MetricLine.create({
+                    "report_id": record.id,
+                    "sequence": 1,
+                    "metric_name": _("Indicador Principal da Meta"),
+                    "metric_code": main_metric_code,
+                    "description": record.goal_id.metric_description or record.goal_id.description or "",
+                    "metric_type": record.goal_id.metric_type,
+                    "unit_of_measure": record.goal_id.unit_of_measure,
+                    "planned_value": record.goal_id.target_value,
+                    "weight": record.goal_id.weight or 1.0,
+                })
+
+            # 2) Copiar métricas específicas configuradas na meta
+            for metric in record.goal_id.specific_metric_ids.filtered(lambda m: m.active):
+                already_exists = False
+
+                if metric.metric_code and metric.metric_code in existing_codes:
+                    already_exists = True
+
+                if not metric.metric_code and metric.metric_name in existing_names:
+                    already_exists = True
+
+                if already_exists:
+                    continue
+
+                MetricLine.create({
+                    "report_id": record.id,
+                    "sequence": metric.sequence or 10,
+                    "metric_name": metric.metric_name,
+                    "metric_code": metric.metric_code,
+                    "description": metric.description,
+                    "metric_type": metric.metric_type,
+                    "unit_of_measure": metric.unit_of_measure,
+                    "planned_value": metric.planned_value,
+                    "weight": metric.weight,
+                })
